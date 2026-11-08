@@ -13,8 +13,6 @@ process TRIMMOMATIC {
 
     output:
     tuple val(meta), path("*_paired.fq.gz")   , emit: paired_reads
-    tuple val(meta), path("*_unpaired.fq.gz") , emit: unpaired_reads
-    tuple val(meta), path("*_trimmomatic.log"), emit: log
     tuple val("${task.process}"), val('trimmomatic'), eval("trimmomatic -version 2>/dev/null || echo '0.39'"), emit: versions_trimmomatic, topic: versions
 
     when:

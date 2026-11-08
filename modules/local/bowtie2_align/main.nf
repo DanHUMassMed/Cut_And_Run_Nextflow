@@ -13,7 +13,6 @@ process BOWTIE2_ALIGN {
 
     output:
     tuple val(meta), path("${prefix}_bowtieoutput.sam"), emit: sam
-    tuple val(meta), path("${prefix}_bowtie2.log")     , emit: log
     tuple val("${task.process}"), val('bowtie2'), eval("(bowtie2 --version 2>&1 || true) | sed -n 's/.*bowtie2-align-s version //p'"), emit: versions_bowtie2, topic: versions
 
     when:

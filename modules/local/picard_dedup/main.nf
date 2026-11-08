@@ -4,8 +4,8 @@ process PICARD_DEDUP {
 
     conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container
-        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/b4/b474c6f12c0502377b95062b75ef4b7778864b1353c7fc1d5a3b1f3b3017fd2e/data'
-        : 'community.wave.seqera.io/library/picard:3.5.0--be20f299a1924f0d'}"
+        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/4b/4b96a9220ddf2c63578a692de4d8915d0518ac2193796b05f062467c6fa06d4a/data'
+        : 'community.wave.seqera.io/library/picard:2.5.0--ae1bfd53d47863a8'}"
 
     input:
     tuple val(meta), path(sam)

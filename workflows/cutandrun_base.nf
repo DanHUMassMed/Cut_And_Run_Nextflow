@@ -60,16 +60,14 @@ workflow CUTANDRUN_BASE {
     //
     // Step 01: Adapter Trimming with Trimmomatic PE
     //
-    def ch_trimmed_reads   = ch_existing_trimmed
-    def ch_trimmomatic_log = channel.empty()
+    def ch_trimmed_reads = ch_existing_trimmed
 
     if (params.run_trimmomatic) {
         TRIMMOMATIC(
             ch_raw_reads,
             file(params.trimmomatic_adapters, checkIfExists: true)
         )
-        ch_trimmed_reads   = TRIMMOMATIC.out.paired_reads
-        ch_trimmomatic_log = TRIMMOMATIC.out.log
+        ch_trimmed_reads = TRIMMOMATIC.out.paired_reads
     }
 
     //
@@ -97,16 +95,14 @@ workflow CUTANDRUN_BASE {
     //
     // Step 03: Paired-End Genome Alignment with Bowtie2 (on trimmed paired reads)
     //
-    def ch_align_sam   = ch_existing_align_sam
-    def ch_bowtie2_log = channel.empty()
+    def ch_align_sam = ch_existing_align_sam
 
     if (params.run_bowtie2_align) {
         BOWTIE2_ALIGN(
             ch_trimmed_reads,
             ch_bowtie2_index
         )
-        ch_align_sam   = BOWTIE2_ALIGN.out.sam
-        ch_bowtie2_log = BOWTIE2_ALIGN.out.log
+        ch_align_sam = BOWTIE2_ALIGN.out.sam
     }
 
     //
@@ -201,11 +197,9 @@ workflow CUTANDRUN_BASE {
     raw_fastqc_html     = ch_raw_fastqc_html
     raw_multiqc         = ch_raw_multiqc
     trimmed_reads       = ch_trimmed_reads
-    trimmomatic_log     = ch_trimmomatic_log
     trimmed_fastqc_html = ch_trimmed_fastqc_html
     trimmed_multiqc     = ch_trimmed_multiqc
     align_sam           = ch_align_sam
-    bowtie2_log         = ch_bowtie2_log
     dedup_bam           = ch_dedup_bam
     dedup_metrics       = ch_dedup_metrics
     mapq_sam            = ch_mapq_sam
