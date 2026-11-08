@@ -26,40 +26,20 @@ process PICARD_DEDUP {
     """
     mkdir -p tmp_picard
 
-    if command -v picard >/dev/null 2>&1; then
-        picard -Xmx${avail_mem}M SortSam \\
-            --INPUT "${sam}" \\
-            --OUTPUT "${prefix}_PicardSort.bam" \\
-            --VALIDATION_STRINGENCY ${stringency} \\
-            --TMP_DIR tmp_picard \\
-            --SORT_ORDER coordinate
+    picard -Xmx${avail_mem}M SortSam \\
+        --INPUT "${sam}" \\
+        --OUTPUT "${prefix}_PicardSort.bam" \\
+        --VALIDATION_STRINGENCY ${stringency} \\
+        --TMP_DIR tmp_picard \\
+        --SORT_ORDER coordinate
 
-        picard -Xmx${avail_mem}M MarkDuplicates \\
-            --INPUT "${prefix}_PicardSort.bam" \\
-            --OUTPUT "${prefix}_PicardDedup.bam" \\
-            --VALIDATION_STRINGENCY ${stringency} \\
-            --TMP_DIR tmp_picard \\
-            --METRICS_FILE "${prefix}_dup.txt" \\
-            --REMOVE_DUPLICATES ${remove_dups}
-    elif [[ -f "${params.picard_jar}" ]]; then
-        java -Xmx${avail_mem}M -jar "${params.picard_jar}" SortSam \\
-            INPUT="${sam}" \\
-            OUTPUT="${prefix}_PicardSort.bam" \\
-            VALIDATION_STRINGENCY=${stringency} \\
-            TMP_DIR=tmp_picard \\
-            SORT_ORDER=coordinate
-
-        java -Xmx${avail_mem}M -jar "${params.picard_jar}" MarkDuplicates \\
-            INPUT="${prefix}_PicardSort.bam" \\
-            OUTPUT="${prefix}_PicardDedup.bam" \\
-            VALIDATION_STRINGENCY=${stringency} \\
-            TMP_DIR=tmp_picard \\
-            METRICS_FILE="${prefix}_dup.txt" \\
-            REMOVE_DUPLICATES=${remove_dups}
-    else
-        echo "ERROR: Neither picard binary nor JAR (${params.picard_jar}) found" >&2
-        exit 1
-    fi
+    picard -Xmx${avail_mem}M MarkDuplicates \\
+        --INPUT "${prefix}_PicardSort.bam" \\
+        --OUTPUT "${prefix}_PicardDedup.bam" \\
+        --VALIDATION_STRINGENCY ${stringency} \\
+        --TMP_DIR tmp_picard \\
+        --METRICS_FILE "${prefix}_dup.txt" \\
+        --REMOVE_DUPLICATES ${remove_dups}
 
     rm -rf "${prefix}_PicardSort.bam" tmp_picard
     """
