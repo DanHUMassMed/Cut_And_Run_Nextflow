@@ -23,10 +23,6 @@ process HOMER_UCSC {
     def args2 = task.ext.args2 ?: '-o auto'
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    if [[ -d "${params.homer_bin_dir}" ]]; then
-        export PATH="${params.homer_bin_dir}:\$PATH"
-    fi
-
     makeTagDirectory "${prefix}" ${args} "${sam}"
     makeUCSCfile "${prefix}" ${args2}
     """
