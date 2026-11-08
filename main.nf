@@ -101,12 +101,12 @@ def resolveBowtie2Index(index_param) {
     }
     def index_file = file(index_param)
     def index_id   = index_file.name ?: 'bowtie2_index'
-    def bt2_files  = file("${index_param}.*.bt2*")
+    def bt2_files  = files("${index_param}.*.bt2*")
     if (bt2_files) {
         return [ [ id: index_id ], bt2_files ]
     }
     if (index_file.exists() && index_file.isDirectory()) {
-        def dir_bt2_files = file("${index_param}/*.bt2*")
+        def dir_bt2_files = files("${index_param}/*.bt2*")
         return [ [ id: index_id ], dir_bt2_files ?: index_file ]
     }
     if (index_file.parent && index_file.parent.exists()) {
@@ -142,7 +142,7 @@ workflow {
     }
 
     def resolved_fastq_glob   = params.input_fastq         ?: "${params.fastq_dir}/*_R{1,2}_*.f*q.gz"
-    def resolved_trimmed_glob = params.input_trimmed_fastq ?: "${params.outdir}/01_trim/*{_R1_paired.fq.gz,_R2_paired.fq.gz,.paired.trim_1.fastq.gz,.paired.trim_2.fastq.gz}"
+    def resolved_trimmed_glob = params.input_trimmed_fastq ?: "${params.outdir}/01_trim/*_R{1,2}*_paired.fq.gz"
     def resolved_align_glob   = params.input_align_sam     ?: "${params.outdir}/03_align/*_bowtieoutput.sam"
     def resolved_dedup_glob   = params.input_dedup_bam     ?: "${params.outdir}/04_dedup/*_PicardDedup.bam"
     def resolved_mapq_glob    = params.input_mapq_sam      ?: "${params.outdir}/05_mapq_filter/*_PicardDedup_mapqfilt.sam"
@@ -179,7 +179,7 @@ workflow {
     def samplesheet_map = loadSamplesheetMap(params.samplesheet)
 
     //
-    // Resolve reference files for nf-core modules
+    // Resolve reference files for alignment and BigWig conversion
     //
     def ch_bowtie2_index = resolveBowtie2Index(params.bowtie2_index)
     def ch_chrom_sizes   = resolveChromSizes(params.chrom_sizes)
