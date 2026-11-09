@@ -34,7 +34,7 @@ process HOMER_UCSC {
     mkdir -p "tag_dir/${prefix}" "${prefix}"
     touch "tag_dir/${prefix}/tagInfo.txt"
     touch "tag_dir/${prefix}/tagLengthDistribution.txt"
-    echo "" | gzip > "${prefix}/${prefix}.ucsc.bedGraph.gz"
+    echo "" | gzip > "UCSC/${prefix}.ucsc.bedGraph.gz"
     """
 }
 
