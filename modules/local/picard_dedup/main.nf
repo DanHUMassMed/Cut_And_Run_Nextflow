@@ -27,19 +27,19 @@ process PICARD_DEDUP {
     mkdir -p tmp_picard
 
     picard -Xmx${avail_mem}M SortSam \\
-        --INPUT "${sam}" \\
-        --OUTPUT "${prefix}_PicardSort.bam" \\
-        --VALIDATION_STRINGENCY ${stringency} \\
-        --TMP_DIR tmp_picard \\
-        --SORT_ORDER coordinate
+        INPUT="${sam}" \\
+        OUTPUT="${prefix}_PicardSort.bam" \\
+        VALIDATION_STRINGENCY=${stringency} \\
+        TMP_DIR=tmp_picard \\
+        SORT_ORDER=coordinate
 
     picard -Xmx${avail_mem}M MarkDuplicates \\
-        --INPUT "${prefix}_PicardSort.bam" \\
-        --OUTPUT "${prefix}_PicardDedup.bam" \\
-        --VALIDATION_STRINGENCY ${stringency} \\
-        --TMP_DIR tmp_picard \\
-        --METRICS_FILE "${prefix}_dup.txt" \\
-        --REMOVE_DUPLICATES ${remove_dups}
+        INPUT="${prefix}_PicardSort.bam" \\
+        OUTPUT="${prefix}_PicardDedup.bam" \\
+        VALIDATION_STRINGENCY=${stringency} \\
+        TMP_DIR=tmp_picard \\
+        METRICS_FILE="${prefix}_dup.txt" \\
+        REMOVE_DUPLICATES=${remove_dups}
 
     rm -rf "${prefix}_PicardSort.bam" tmp_picard
     """
