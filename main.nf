@@ -146,7 +146,7 @@ workflow {
     def resolved_align_glob   = params.input_align_sam     ?: "${params.outdir}/03_align/*_bowtieoutput.sam"
     def resolved_dedup_glob   = params.input_dedup_bam     ?: "${params.outdir}/04_dedup/*_PicardDedup.bam"
     def resolved_mapq_glob    = params.input_mapq_sam      ?: "${params.outdir}/05_mapq_filter/*_PicardDedup_mapqfilt.sam"
-    def resolved_bg_glob      = params.input_bedgraph      ?: "${params.outdir}/07_ucsc/*/*.ucsc.bedGraph.gz"
+    def resolved_bg_glob      = params.input_bedgraph      ?: "${params.outdir}/07_homer/*/*.ucsc.bedGraph.gz"
 
     log.info """\
     ========================================================================

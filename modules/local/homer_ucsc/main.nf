@@ -11,8 +11,8 @@ process HOMER_UCSC {
     tuple val(meta), path(sam)
 
     output:
-    tuple val(meta), path("${prefix}")                   , emit: tagdir
-    tuple val(meta), path("${prefix}/*.ucsc.bedGraph.gz"), emit: bedgraph
+    tuple val(meta), path("tag_dir/${prefix}")                   , emit: tagdir
+    tuple val(meta), path("${prefix}/${prefix}.ucsc.bedGraph.gz"), emit: bedgraph
     tuple val("${task.process}"), val('homer'), val('4.11'), emit: versions_homer, topic: versions
 
     when:
@@ -20,19 +20,20 @@ process HOMER_UCSC {
 
     script:
     def args = task.ext.args ?: ''
-    def args2 = task.ext.args2 ?: '-o auto'
+    def args2 = task.ext.args2 ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    makeTagDirectory "${prefix}" ${args} "${sam}"
-    makeUCSCfile "${prefix}" ${args2}
+    mkdir -p "tag_dir" "${prefix}"
+    makeTagDirectory "tag_dir/${prefix}" ${args} "${sam}"
+    makeUCSCfile "tag_dir/${prefix}" -o "${prefix}/${prefix}.ucsc.bedGraph" ${args2}
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir -p "${prefix}"
-    touch "${prefix}/tagInfo.txt"
-    touch "${prefix}/tagLengthDistribution.txt"
+    mkdir -p "tag_dir/${prefix}" "${prefix}"
+    touch "tag_dir/${prefix}/tagInfo.txt"
+    touch "tag_dir/${prefix}/tagLengthDistribution.txt"
     echo "" | gzip > "${prefix}/${prefix}.ucsc.bedGraph.gz"
     """
 }
