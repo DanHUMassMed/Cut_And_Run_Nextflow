@@ -25,7 +25,7 @@ process HOMER_UCSC {
     """
     mkdir -p "tag_dir" "${prefix}"
     makeTagDirectory "tag_dir/${prefix}" ${args} "${sam}"
-    makeUCSCfile "tag_dir/${prefix}" -o "${prefix}/${prefix}.ucsc.bedGraph" ${args2}
+    makeUCSCfile "tag_dir/${prefix}" -o "UCSC/${prefix}.ucsc.bedGraph" ${args2}
     """
 
     stub:
