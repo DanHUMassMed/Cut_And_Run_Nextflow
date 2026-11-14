@@ -3,5 +3,6 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  - bioconda::homer=4.11
   - bioconda::ucsc-bedgraphtobigwig=482
 

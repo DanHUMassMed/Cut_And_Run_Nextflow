@@ -7,7 +7,7 @@
 #   - 02_multiqc/      (multiqc_original_report.html & multiqc_trimmed_report.html)
 #   - 04_dedup/        (*_dup.txt Picard duplication metrics)
 #   - 06_index_bam/    (*.bam & *.bam.bai — sorted, deduplicated, MAPQ-filtered BAMs)
-#   - 07_homer/        (tag_dir/<sample>/ & <sample>/*.ucsc.bedGraph.gz)
+#   - 07_homer/        (tag_dir/<sample>/ & UCSC/*.ucsc.bedGraph.gz)
 #   - 08_bigwig/       (deepTools/*.bw & UCSC/*.bw)
 #   - pipeline_info/   (Nextflow execution reports, timeline, DAG, software versions)
 #

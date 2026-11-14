@@ -1,4 +1,10 @@
-process INDEX_BAM {
+/*
+ * Indexes a BAM file using samtools index.
+ *
+ * Reference:
+ * https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html
+ */
+process DEEPTOOLS_BAM_BW {
     tag "${meta.id}"
     label 'process_medium'
 

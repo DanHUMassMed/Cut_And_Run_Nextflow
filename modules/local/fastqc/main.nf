@@ -1,3 +1,11 @@
+/*
+ * FastQC performs quality control checks on raw sequencing reads, generating
+ * HTML reports and ZIP archives containing summary statistics and diagnostic
+ * plots. These reports help identify potential sequencing quality issues,
+ * adapter contamination, and other anomalies before downstream analysis.
+ *
+ * Documentation: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/
+ */
 process FASTQC {
     tag "${meta.id}"
     label 'process_low'

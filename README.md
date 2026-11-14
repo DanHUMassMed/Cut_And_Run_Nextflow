@@ -1,14 +1,13 @@
 # CUT&RUN Upstream Base Pipeline (`cutandrun-base`)
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A525.10.4-23aa62.svg)](https://www.nextflow.io/)
-[![run with conda](https://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 [![Executor: LSF](https://img.shields.io/badge/executor-LSF%20%7C%20local-blue)](https://www.nextflow.io/docs/latest/executor.html#lsf)
 
 A modular **Nextflow DSL2** pipeline for upstream **CUT&RUN** paired-end sequencing processing—from raw FASTQ quality control and adapter trimming through alignment, duplicate removal, MAPQ filtering, BAM indexing, HOMER tag directory generation, and normalized BigWig track creation.
 
-Designed for **UMass Chan HPC (LSF)** with native support for **Singularity/Apptainer**, **Docker**, **Conda/Mamba**, and environment modules (`-profile hpc`), and engineered to feed directly into the downstream [Cut_And_Run_Analysis](https://github.com/DanHUMassMed/Cut_And_Run_Analysis) peak-calling and motif discovery pipeline.
+Designed for **UMass Chan HPC (LSF)** with containerized execution via **Singularity** and **Docker**, engineered to feed directly into the downstream [Cut_And_Run_Analysis](https://github.com/DanHUMassMed/Cut_And_Run_Analysis) peak-calling and motif discovery pipeline.
 
 ---
 
@@ -60,7 +59,7 @@ flowchart TD
     S03 --> S04["Step 04: PICARD_DEDUP<br/>(04_dedup/*_PicardDedup.bam & *_dup.txt)"]
     S04 --> S05["Step 05: SAMTOOLS_MAPQ_FILTER<br/>(05_mapq_filter/*_PicardDedup_mapqfilt.sam)"]
     S05 --> S06["Step 06: INDEX_BAM<br/>(06_index_bam/*.bam, *.bam.bai & 08_bigwig/deepTools/*.bw)"]
-    S05 --> S07["Step 07: HOMER_UCSC<br/>(07_homer/tag_dir/<sample>/ & 07_homer/<sample>/*.ucsc.bedGraph.gz)"]
+    S05 --> S07["Step 07: HOMER_UCSC<br/>(07_homer/tag_dir/<sample>/ & 07_homer/UCSC/*.ucsc.bedGraph.gz)"]
     S07 --> S08["Step 08: UCSC_BEDGRAPHTOBIGWIG<br/>(08_bigwig/UCSC/*.bw)"]
     CS[("chrom.sizes")] --> S08
 ```
@@ -115,20 +114,16 @@ Cut_And_Run_Nextflow/
 - **Java:** `>= 17`
 - **Compute Environment:** Default configuration targets an **IBM Spectrum LSF** cluster (`executor = 'lsf'`) with **Singularity** enabled by default. Use `-profile` to match your environment:
 
-| Profile | Container / Package Engine | Executor | Description |
+| Profile | Container Engine | Executor | Description |
 | :--- | :--- | :--- | :--- |
 | *(default)* | Singularity (`autoMounts = true`) | `lsf` | Default HPC execution using Singularity containers on LSF queues (`short`/`long`) |
 | `singularity` | Singularity | `lsf` | Explicit Singularity container profile |
-| `apptainer` | Apptainer | `lsf` | Apptainer container profile |
-| `hpc` | LSF Environment Modules | `lsf` | Uses cluster `module load` (`fastqc`, `trimmomatic`, `bowtie2`, `picard`, `samtools`, `deeptools`, `homer_env`, `ucsc_utilities`) without containers |
 | `docker` | Docker | `lsf` / `local` | Runs processes in Docker containers with automatic volume mounts |
-| `conda` | Conda | `lsf` / `local` | Builds per-module Conda environments from `modules/local/*/environment.yml` |
-| `mamba` | Mamba | `lsf` / `local` | Uses Mamba for faster Conda environment resolution |
 | `local` | Host PATH | `local` | Disables Singularity and runs processes locally on the host machine |
 | `debug` | Inherited | Inherited | Enables hash dumping, prints `$HOSTNAME`, disables cleanup, and validates process names |
 
 > [!TIP]
-> Profiles can be combined with commas, e.g. `-profile local,docker` or `-profile local,conda` when running on a workstation without LSF.
+> Profiles can be combined with commas, e.g. `-profile local,docker` when running on a workstation without LSF.
 
 ---
 
@@ -177,9 +172,6 @@ Use the helper script `run.sh` (or call `nextflow` directly):
 # Run on HPC with default Singularity + LSF settings
 ./run.sh
 
-# Run on HPC using environment modules instead of containers
-./run.sh -profile hpc
-
 # Or invoke Nextflow directly
 nextflow -c config/experiment.config run /path/to/Cut_And_Run_Nextflow -resume
 ```
@@ -213,7 +205,7 @@ Each pipeline stage can be toggled via boolean parameters. When a step is disabl
 | `run_mapq_filter` | `true` | `input_dedup_bam` *(if `run_picard_dedup = false`)* | `"${params.outdir}/04_dedup/*_PicardDedup.bam"` |
 | `run_index_bam` | `true` | `input_mapq_sam` *(if `run_mapq_filter = false`)* | `"${params.outdir}/05_mapq_filter/*_PicardDedup_mapqfilt.sam"` |
 | `run_homer_ucsc` | `true` | `input_mapq_sam` *(if `run_mapq_filter = false`)* | `"${params.outdir}/05_mapq_filter/*_PicardDedup_mapqfilt.sam"` |
-| `run_ucsc_bigwig` | `true` | `input_bedgraph` *(if `run_homer_ucsc = false`)* | `"${params.outdir}/07_homer/*/*.ucsc.bedGraph.gz"` |
+| `run_ucsc_bigwig` | `true` | `input_bedgraph` *(if `run_homer_ucsc = false`)* | `"${params.outdir}/07_homer/UCSC/*.ucsc.bedGraph.gz"` |
 
 ### Output Publishing Controls
 
@@ -241,7 +233,6 @@ Each pipeline stage can be toggled via boolean parameters. When a step is disabl
 | `picard_remove_duplicates` | `true` | Picard `REMOVE_DUPLICATES` boolean flag |
 | `mapq_threshold` | `10` | Minimum MAPQ score retained by `samtools view -q` |
 | `bamcoverage_norm` | `"RPKM"` | Normalization method passed to `bamCoverage --normalizeUsing` |
-| `multiqc_module` | `""` | Optional LSF module name for MultiQC when using `-profile hpc` |
 
 ### Samplesheet Format
 
@@ -283,7 +274,7 @@ results/<experiment>/
 ├── 07_homer/
 │   ├── tag_dir/
 │   │   └── <sample>/                           # HOMER tag directory
-│   └── <sample>/
+│   └── UCSC/
 │       └── <sample>.ucsc.bedGraph.gz           # HOMER UCSC normalized bedGraph track
 ├── 08_bigwig/
 │   ├── deepTools/

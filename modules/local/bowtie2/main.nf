@@ -22,15 +22,10 @@ process BOWTIE2_ALIGN {
     def args = task.ext.args ?: "${params.bowtie2_args ?: '--very-sensitive -N 0 -X 500'}"
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    INDEX=\$(find -L ./ -name "*.rev.1.bt2*" | head -n 1 | sed -E 's/\\.rev\\.1\\.bt2l?\$//')
-    if [[ -z "\$INDEX" ]]; then
-        INDEX="${params.bowtie2_index}"
-    fi
-
     bowtie2 -q \\
         ${args} \\
         -p ${task.cpus} \\
-        -x "\$INDEX" \\
+        -x "${params.bowtie2_index}" \\
         -1 "${reads[0]}" -2 "${reads[1]}" \\
         -S "${prefix}_bowtieoutput.sam" \\
         2> >(tee "${prefix}_bowtie2.log" >&2)

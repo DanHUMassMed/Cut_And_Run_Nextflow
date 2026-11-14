@@ -8,12 +8,12 @@ include { MULTIQC as MULTIQC_RAW     } from '../modules/local/multiqc/main'
 include { TRIMMOMATIC                } from '../modules/local/trimmomatic/main'
 include { FASTQC as FASTQC_TRIMMED   } from '../modules/local/fastqc/main'
 include { MULTIQC as MULTIQC_TRIMMED } from '../modules/local/multiqc/main'
-include { BOWTIE2_ALIGN              } from '../modules/local/bowtie2_align/main'
-include { PICARD_DEDUP               } from '../modules/local/picard_dedup/main'
-include { SAMTOOLS_MAPQ_FILTER       } from '../modules/local/samtools_mapq_filter/main'
-include { INDEX_BAM                  } from '../modules/local/index_bam/main'
-include { HOMER_UCSC                 } from '../modules/local/homer_ucsc/main'
-include { UCSC_BEDGRAPHTOBIGWIG      } from '../modules/local/ucsc_bigwig/main'
+include { BOWTIE2_ALIGN              } from '../modules/local/bowtie2/main'
+include { PICARD_DEDUP               } from '../modules/local/picard/main'
+include { SAMTOOLS_MAPQ_FILTER       } from '../modules/local/samtools/main'
+include { DEEPTOOLS_BAM_BW           } from '../modules/local/deeptools/main'
+include { HOMER_TAG_DIR              } from '../modules/local/homer/tag_dir/main'
+include { HOMER_UCSC_BW              } from '../modules/local/homer/ucsc_bw/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -133,35 +133,35 @@ workflow CUTANDRUN_BASE {
     def ch_bam_bai = channel.empty()
     def ch_rpkm_bw = channel.empty()
 
-    if (params.run_index_bam) {
-        INDEX_BAM(ch_mapq_sam)
-        ch_bam_bai = INDEX_BAM.out.bam_bai
-        ch_rpkm_bw = INDEX_BAM.out.bigwig
+    if (params.run_deeptools_bam_bw) {
+        DEEPTOOLS_BAM_BW(ch_mapq_sam)
+        ch_bam_bai = DEEPTOOLS_BAM_BW.out.bam_bai
+        ch_rpkm_bw = DEEPTOOLS_BAM_BW.out.bigwig
     }
 
     //
-    // Step 07: HOMER Tag Directory & UCSC bedGraph Track
+    // Step 07: HOMER Tag Directory
     //
-    def ch_tagdir   = channel.empty()
+    def ch_tagdir = channel.empty()
+
+    if (params.run_homer_tag_dir) {
+        HOMER_TAG_DIR(ch_mapq_sam)
+        ch_tagdir = HOMER_TAG_DIR.out.tagdir
+    }
+
+    //
+    // Step 08: HOMER UCSC bedGraph & BigWig Generation
+    //
+    def ch_ucsc_bw  = channel.empty()
     def ch_bedgraph = ch_existing_bedgraph
-
-    if (params.run_homer_ucsc) {
-        HOMER_UCSC(ch_mapq_sam)
-        ch_tagdir   = HOMER_UCSC.out.tagdir
-        ch_bedgraph = HOMER_UCSC.out.bedgraph
-    }
-
-    //
-    // Step 08: UCSC bedGraphToBigWig Conversion
-    //
-    def ch_ucsc_bw = channel.empty()
 
     if (params.run_ucsc_bigwig) {
         UCSC_BEDGRAPHTOBIGWIG(
-            ch_bedgraph,
+            ch_tagdir,
             ch_chrom_sizes
         )
-        ch_ucsc_bw = UCSC_BEDGRAPHTOBIGWIG.out.bigwig
+        ch_ucsc_bw  = UCSC_BEDGRAPHTOBIGWIG.out.bigwig
+        ch_bedgraph = UCSC_BEDGRAPHTOBIGWIG.out.bedgraph
     }
 
     //
