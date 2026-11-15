@@ -54,6 +54,11 @@ workflow {
     ========================================================================
     """.stripIndent()
 
+    def input_align_sam = "${params.outdir}/03_align/*_align.sam"
+    def input_dedup_bam = "${params.outdir}/04_dedup/*_dedup.bam"
+    def input_mapq_sam  = "${params.outdir}/05_mapq_filter/*_mapqfilter.sam"
+    def input_bedgraph  = "${params.outdir}/07_homer/ucsc_bw/*.ucsc.bedGraph.gz"
+
     //
     // Load optional sample metadata from samplesheet.csv if present
     //
@@ -68,10 +73,10 @@ workflow {
     def ch_raw_reads           = resolvePairedFastq(params.input_fastq, samplesheet_map)
     def ch_existing_trimmed    = resolvePairedFastq(params.input_trimmed_fastq, samplesheet_map, ['.paired.trim', '_paired'])
 
-    def ch_existing_align_sam  = resolveInputFiles(params.input_align_sam, samplesheet_map, ['_align.sam'])
-    def ch_existing_dedup_bam  = resolveInputFiles(params.input_dedup_bam, samplesheet_map, ['_dedup.bam', '.bam'])
-    def ch_existing_mapq_sam   = resolveInputFiles(params.input_mapq_sam, samplesheet_map, ['_mapqfilter.sam', '.sam'])
-    def ch_existing_bedgraph   = resolveInputFiles(params.input_bedgraph, samplesheet_map, ['.ucsc.bedGraph.gz', '.bedGraph.gz', '.bedGraph'])
+    def ch_existing_align_sam  = resolveInputFiles(input_align_sam, samplesheet_map, ['_align.sam'])
+    def ch_existing_dedup_bam  = resolveInputFiles(input_dedup_bam, samplesheet_map, ['_dedup.bam', '.bam'])
+    def ch_existing_mapq_sam   = resolveInputFiles(input_mapq_sam, samplesheet_map, ['_mapqfilter.sam', '.sam'])
+    def ch_existing_bedgraph   = resolveInputFiles(input_bedgraph, samplesheet_map, ['.ucsc.bedGraph.gz', '.bedGraph.gz', '.bedGraph'])
     //
     // WORKFLOW: Run CUTANDRUN_BASE
     //

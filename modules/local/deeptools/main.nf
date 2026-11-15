@@ -26,7 +26,7 @@ process DEEPTOOLS_BAM_BW {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: "--normalizeUsing ${params.bamcoverage_norm ?: 'RPKM'}"
+    def args = task.ext.args ?: "--normalizeUsing ${params.bamcoverage_norm} --binSize ${params.bamcoverage_bin_size}"
     prefix = task.ext.prefix ?: "${meta.id}"
     """
     samtools view -@ ${task.cpus} -bh "${sam}" > "${prefix}.bam"
