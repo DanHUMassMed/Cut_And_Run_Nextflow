@@ -14,7 +14,7 @@ include {
     resolveChromSizes;
     resolvePairedFastq;
     resolveInputFiles;
-} from './utility/functions'
+} from './lib/utils'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
