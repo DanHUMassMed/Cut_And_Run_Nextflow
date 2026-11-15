@@ -155,13 +155,13 @@ workflow CUTANDRUN_BASE {
     def ch_ucsc_bw  = channel.empty()
     def ch_bedgraph = ch_existing_bedgraph
 
-    if (params.run_ucsc_bigwig) {
-        UCSC_BEDGRAPHTOBIGWIG(
+    if (params.run_homer_ucsc_bw) {
+        HOMER_UCSC_BW(
             ch_tagdir,
             ch_chrom_sizes
         )
-        ch_ucsc_bw  = UCSC_BEDGRAPHTOBIGWIG.out.bigwig
-        ch_bedgraph = UCSC_BEDGRAPHTOBIGWIG.out.bedgraph
+        ch_ucsc_bw  = HOMER_UCSC_BW.out.bigwig
+        ch_bedgraph = HOMER_UCSC_BW.out.bedgraph
     }
 
     //

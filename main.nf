@@ -11,7 +11,9 @@ include {
     extractSampleId;
     buildMeta;
     resolveBowtie2Index;
-    resolveChromSizes
+    resolveChromSizes;
+    resolvePairedFastq;
+    resolveInputFiles;
 } from './utility/functions'
 
 /*
@@ -47,6 +49,7 @@ workflow {
        picard_dedup             : ${params.run_picard_dedup}
        samtools_mapq_filter     : ${params.run_mapq_filter}
        deeptools_bam_bw         : ${params.run_deeptools_bam_bw}
+       homer_tagdir             : ${params.run_homer_tag_dir}
        homer_ucsc_ucsc          : ${params.run_homer_ucsc_bw}
     ========================================================================
     """.stripIndent()
@@ -65,9 +68,9 @@ workflow {
     def ch_raw_reads           = resolvePairedFastq(params.input_fastq, samplesheet_map)
     def ch_existing_trimmed    = resolvePairedFastq(params.input_trimmed_fastq, samplesheet_map, ['.paired.trim', '_paired'])
 
-    def ch_existing_align_sam  = resolveInputFiles(params.input_align_sam, samplesheet_map, ['.sam'])
+    def ch_existing_align_sam  = resolveInputFiles(params.input_align_sam, samplesheet_map, ['_align.sam'])
     def ch_existing_dedup_bam  = resolveInputFiles(params.input_dedup_bam, samplesheet_map, ['_dedup.bam', '.bam'])
-    def ch_existing_mapq_sam   = resolveInputFiles(params.input_mapq_sam, samplesheet_map, ['_PicardDedup_mapqfilt.sam', '.sam'])
+    def ch_existing_mapq_sam   = resolveInputFiles(params.input_mapq_sam, samplesheet_map, ['_mapqfilter.sam', '.sam'])
     def ch_existing_bedgraph   = resolveInputFiles(params.input_bedgraph, samplesheet_map, ['.ucsc.bedGraph.gz', '.bedGraph.gz', '.bedGraph'])
     //
     // WORKFLOW: Run CUTANDRUN_BASE
@@ -83,10 +86,11 @@ workflow {
         ch_chrom_sizes
     )
 
-    onComplete:
-    if (workflow.success) {
-        log.info "\nUpstream base pipeline completed successfully! Results available in: ${params.outdir}\n"
-    } else {
-        log.warn "\nUpstream base pipeline completed with errors. Check the logs for details.\n"
+    workflow.onComplete = {
+        if (workflow.success) {
+            log.info "\nUpstream base pipeline completed successfully! Results available in: ${params.outdir}\n"
+        } else {
+            log.warn "\nUpstream base pipeline completed with errors. Check the logs for details.\n"
+        }
     }
 }

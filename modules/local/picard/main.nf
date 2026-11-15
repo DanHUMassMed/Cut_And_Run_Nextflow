@@ -11,7 +11,7 @@ process PICARD_DEDUP {
     tuple val(meta), path(sam)
 
     output:
-    tuple val(meta), path("${prefix}_PicardDedup.bam"), emit: bam
+    tuple val(meta), path("${prefix}_dedup.bam"), emit: bam
     tuple val(meta), path("${prefix}_dup.txt")        , emit: metrics
     tuple val("${task.process}"), val('picard'), eval("(picard MarkDuplicates --version 2>&1 || true) | sed -n 's/.*Version://p' | head -n 1"), emit: versions_picard, topic: versions
 
@@ -28,26 +28,26 @@ process PICARD_DEDUP {
 
     picard -Xmx${avail_mem}M SortSam \\
         INPUT="${sam}" \\
-        OUTPUT="${prefix}_PicardSort.bam" \\
+        OUTPUT="${prefix}_sort.bam" \\
         VALIDATION_STRINGENCY=${stringency} \\
         TMP_DIR=tmp_picard \\
         SORT_ORDER=coordinate
 
     picard -Xmx${avail_mem}M MarkDuplicates \\
-        INPUT="${prefix}_PicardSort.bam" \\
-        OUTPUT="${prefix}_PicardDedup.bam" \\
+        INPUT="${prefix}_sort.bam" \\
+        OUTPUT="${prefix}_dedup.bam" \\
         VALIDATION_STRINGENCY=${stringency} \\
         TMP_DIR=tmp_picard \\
         METRICS_FILE="${prefix}_dup.txt" \\
         REMOVE_DUPLICATES=${remove_dups}
 
-    rm -rf "${prefix}_PicardSort.bam" tmp_picard
+    rm -rf "${prefix}_sort.bam" tmp_picard
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch "${prefix}_PicardDedup.bam"
+    touch "${prefix}_dedup.bam"
     touch "${prefix}_dup.txt"
     """
 }

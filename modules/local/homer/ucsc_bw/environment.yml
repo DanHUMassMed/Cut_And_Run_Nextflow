@@ -5,4 +5,7 @@ channels:
 dependencies:
   - bioconda::homer=4.11
   - bioconda::ucsc-bedgraphtobigwig=482
+  - conda-forge::gzip=1.15
+  - conda-forge::gocryptfs=2.6.1
+
 

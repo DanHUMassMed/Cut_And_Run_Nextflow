@@ -4,8 +4,8 @@ process HOMER_UCSC_BW {
 
     conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container
-        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/21/210205cab907384cc30cfb91fa1eb2d9458021e98debf6d23b90c33d9fb2eb4d/data'
-        : 'community.wave.seqera.io/library/ucsc-bedgraphtobigwig:482--2d280d39bedffa30'}"
+        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/a0/a0dbdca6215b94a40619b41df291e56e9dbabc0db0219fe2faec4f207e588863/data'
+        : 'community.wave.seqera.io/library/homer_ucsc-bedgraphtobigwig_gzip_gocryptfs:1eb99b08887c59ea'}"
 
     input:
     tuple val(meta), path(tag_dir)
@@ -25,13 +25,13 @@ process HOMER_UCSC_BW {
     def args2 = task.ext.args2 ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    makeUCSCfile "${tag_dir}" -o "${prefix}.ucsc.bedGraph.gz" ${args}
+    makeUCSCfile "${tag_dir}" -o "${prefix}.ucsc.bedGraph" ${args}
+    gzip -dc "${prefix}.ucsc.bedGraph.gz" \
+        | grep -v '^#' \
+        | grep -v '^track' \
+        | LC_COLLATE=C sort -k1,1 -k2,2n \
+        > "${prefix}.temp.bedGraph"
 
-    if [[ -f "${prefix}.ucsc.bedGraph.gz" ]]; then
-        gzip -dc "${prefix}.ucsc.bedGraph.gz"
-    elif [[ -f "${prefix}.ucsc.bedGraph" ]]; then
-        cat "${prefix}.ucsc.bedGraph"
-    fi | grep -v '^#' | grep -v '^track' | LC_COLLATE=C sort -k1,1 -k2,2n > "${prefix}.temp.bedGraph"
     
     bedGraphToBigWig \\
         ${args2} \\
@@ -46,7 +46,7 @@ process HOMER_UCSC_BW {
     prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo "" | gzip > "${prefix}.ucsc.bedGraph.gz"
-    touch "${prefix}.bw"
+    touch "${prefix}.homer.bw"
     """
 }
 

@@ -11,7 +11,7 @@ process SAMTOOLS_MAPQ_FILTER {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("${prefix}_PicardDedup_mapqfilt.sam"), emit: sam
+    tuple val(meta), path("${prefix}_mapqfilter.sam"), emit: sam
     tuple val("${task.process}"), val('samtools'), eval("(samtools --version 2>&1 || true) | sed '1!d;s/^.*samtools //'"), emit: versions_samtools, topic: versions
 
     when:
@@ -25,13 +25,13 @@ process SAMTOOLS_MAPQ_FILTER {
         -@ ${task.cpus} \\
         -h \\
         ${args} \\
-        "${bam}" > "${prefix}_PicardDedup_mapqfilt.sam"
+        "${bam}" > "${prefix}_mapqfilter.sam"
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch "${prefix}_PicardDedup_mapqfilt.sam"
+    touch "${prefix}_mapqfilter.sam"
     """
 }
 

@@ -12,7 +12,7 @@ process BOWTIE2_ALIGN {
     tuple val(index_meta), path(index)
 
     output:
-    tuple val(meta), path("${prefix}_bowtieoutput.sam"), emit: sam
+    tuple val(meta), path("${prefix}_align.sam"), emit: sam
     tuple val("${task.process}"), val('bowtie2'), eval("(bowtie2 --version 2>&1 || true) | sed -n 's/.*bowtie2-align-s version //p'"), emit: versions_bowtie2, topic: versions
 
     when:
@@ -27,14 +27,14 @@ process BOWTIE2_ALIGN {
         -p ${task.cpus} \\
         -x "${params.bowtie2_index}" \\
         -1 "${reads[0]}" -2 "${reads[1]}" \\
-        -S "${prefix}_bowtieoutput.sam" \\
+        -S "${prefix}_align.sam" \\
         2> >(tee "${prefix}_bowtie2.log" >&2)
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch "${prefix}_bowtieoutput.sam"
+    touch "${prefix}_align.sam"
     touch "${prefix}_bowtie2.log"
     """
 }
