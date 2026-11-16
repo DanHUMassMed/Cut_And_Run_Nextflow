@@ -12,7 +12,7 @@ process HOMER_UCSC_BW {
     path chrom_sizes
 
     output:
-    tuple val(meta), path("${prefix}.homer.bw")         , emit: bigwig
+    tuple val(meta), path("${prefix}.bw")         , emit: bigwig
     tuple val(meta), path("${prefix}.ucsc.bedGraph.gz") , emit: bedgraph, optional: true
     tuple val("${task.process}"), val('homer'), val('4.11'), emit: versions_homer, topic: versions
     tuple val("${task.process}"), val('ucsc'), val('482')  , emit: versions_ucsc, topic: versions
@@ -37,7 +37,7 @@ process HOMER_UCSC_BW {
         ${args2} \\
         "${prefix}.temp.bedGraph" \\
         "${chrom_sizes}" \\
-        "${prefix}.homer.bw"
+        "${prefix}.bw"
 
     rm -f "${prefix}.temp.bedGraph"
     """
@@ -46,7 +46,7 @@ process HOMER_UCSC_BW {
     prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo "" | gzip > "${prefix}.ucsc.bedGraph.gz"
-    touch "${prefix}.homer.bw"
+    touch "${prefix}.bw"
     """
 }
 
