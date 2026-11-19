@@ -12,8 +12,11 @@ include { BOWTIE2_ALIGN              } from '../modules/local/bowtie2/main'
 include { PICARD_DEDUP               } from '../modules/local/picard/main'
 include { SAMTOOLS_MAPQ_FILTER       } from '../modules/local/samtools/main'
 include { DEEPTOOLS_BAM_BW           } from '../modules/local/deeptools/main'
+include { SAMTOOLS_BAM_STATS         } from '../modules/local/samtools/stats/main'
 include { HOMER_TAG_DIR              } from '../modules/local/homer/tag_dir/main'
 include { HOMER_UCSC_BW              } from '../modules/local/homer/ucsc_bw/main'
+include { MULTIQC as MULTIQC_ALL     } from '../modules/local/multiqc/main'
+include { RCLONE_STAGE_DROPBOX       } from '../modules/local/rclone/stage_dropbox/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,14 +27,21 @@ include { HOMER_UCSC_BW              } from '../modules/local/homer/ucsc_bw/main
 workflow CUTANDRUN_BASE {
 
     take:
-    ch_raw_reads             // channel: [ val(meta), [ path(r1), path(r2) ] ]
-    ch_existing_trimmed      // channel: [ val(meta), [ path(r1), path(r2) ] ]
-    ch_existing_align_sam    // channel: [ val(meta), path(sam) ]
-    ch_existing_dedup_bam    // channel: [ val(meta), path(bam) ]
-    ch_existing_mapq_sam     // channel: [ val(meta), path(sam) ]
-    ch_existing_bedgraph     // channel: [ val(meta), path(bedgraph) ]
-    ch_bowtie2_index         // value:   [ val(meta2), path(index_files) ]
-    ch_chrom_sizes           // value:   path(chrom_sizes)
+    ch_raw_reads                   // channel: [ val(meta), [ path(r1), path(r2) ] ]
+    ch_existing_trimmed            // channel: [ val(meta), [ path(r1), path(r2) ] ]
+    ch_existing_align_sam          // channel: [ val(meta), path(sam) ]
+    ch_existing_dedup_bam          // channel: [ val(meta), path(bam) ]
+    ch_existing_mapq_sam           // channel: [ val(meta), path(sam) ]
+    ch_existing_bam_bai            // channel: [ val(meta), path(bam), path(bai) ]
+    ch_existing_bedgraph           // channel: [ val(meta), path(bedgraph) ]
+    ch_existing_raw_fastqc_zip     // channel: path(zip)
+    ch_existing_trimmomatic_log    // channel: path(log)
+    ch_existing_trimmed_fastqc_zip // channel: path(zip)
+    ch_existing_bowtie2_log        // channel: path(log)
+    ch_existing_dedup_metrics      // channel: path(txt)
+    ch_existing_bam_stats          // channel: path(stats)
+    ch_bowtie2_index               // value:   [ val(meta2), path(index_files) ]
+    ch_chrom_sizes                 // value:   path(chrom_sizes)
 
     main:
 
@@ -53,21 +63,23 @@ workflow CUTANDRUN_BASE {
             .collect()
             .map { files -> [ [ id: 'multiqc_original_report' ], files ] }
 
-        MULTIQC_RAW(ch_raw_multiqc_in)
+        MULTIQC_RAW(ch_raw_multiqc_in, [])
         ch_raw_multiqc = MULTIQC_RAW.out.report
     }
 
     //
     // Step 01: Adapter Trimming with Trimmomatic PE
     //
-    def ch_trimmed_reads = ch_existing_trimmed
+    def ch_trimmed_reads   = ch_existing_trimmed
+    def ch_trimmomatic_log = channel.empty()
 
     if (params.run_trimmomatic) {
         TRIMMOMATIC(
             ch_raw_reads,
             file(params.trimmomatic_adapters, checkIfExists: true)
         )
-        ch_trimmed_reads = TRIMMOMATIC.out.paired_reads
+        ch_trimmed_reads   = TRIMMOMATIC.out.paired_reads
+        ch_trimmomatic_log = TRIMMOMATIC.out.log
     }
 
     //
@@ -88,21 +100,23 @@ workflow CUTANDRUN_BASE {
             .collect()
             .map { files -> [ [ id: 'multiqc_trimmed_report' ], files ] }
 
-        MULTIQC_TRIMMED(ch_trimmed_multiqc_in)
+        MULTIQC_TRIMMED(ch_trimmed_multiqc_in, [])
         ch_trimmed_multiqc = MULTIQC_TRIMMED.out.report
     }
 
     //
     // Step 03: Paired-End Genome Alignment with Bowtie2 (on trimmed paired reads)
     //
-    def ch_align_sam = ch_existing_align_sam
+    def ch_align_sam   = ch_existing_align_sam
+    def ch_bowtie2_log = channel.empty()
 
     if (params.run_bowtie2_align) {
         BOWTIE2_ALIGN(
             ch_trimmed_reads,
             ch_bowtie2_index
         )
-        ch_align_sam = BOWTIE2_ALIGN.out.sam
+        ch_align_sam   = BOWTIE2_ALIGN.out.sam
+        ch_bowtie2_log = BOWTIE2_ALIGN.out.log
     }
 
     //
@@ -140,6 +154,21 @@ workflow CUTANDRUN_BASE {
     }
 
     //
+    // Step 06b: BAM Alignment, Chromosome, & Insert-Size Stats (samtools)
+    //
+    def ch_bam_for_stats = params.run_deeptools_bam_bw ? ch_bam_bai : ch_existing_bam_bai
+    def ch_bam_flagstat  = channel.empty()
+    def ch_bam_idxstats  = channel.empty()
+    def ch_bam_stats     = channel.empty()
+
+    if (params.run_bam_stats) {
+        SAMTOOLS_BAM_STATS(ch_bam_for_stats)
+        ch_bam_flagstat = SAMTOOLS_BAM_STATS.out.flagstat
+        ch_bam_idxstats = SAMTOOLS_BAM_STATS.out.idxstats
+        ch_bam_stats    = SAMTOOLS_BAM_STATS.out.stats
+    }
+
+    //
     // Step 07: HOMER Tag Directory
     //
     def ch_tagdir = channel.empty()
@@ -162,6 +191,58 @@ workflow CUTANDRUN_BASE {
         )
         ch_ucsc_bw  = HOMER_UCSC_BW.out.bigwig
         ch_bedgraph = HOMER_UCSC_BW.out.bedgraph
+    }
+
+    //
+    // Step 09: Unified MultiQC Report (FastQC + Trimmomatic + Bowtie2 + Picard + Samtools)
+    //
+    def ch_multiqc_all = channel.empty()
+
+    if (params.run_multiqc_all) {
+        def ch_mqc_raw_fastqc = params.run_raw_fastqc
+            ? ch_raw_fastqc_zip.map { _meta, zips -> zips }.flatten()
+            : ch_existing_raw_fastqc_zip
+
+        def ch_mqc_trimmomatic = params.run_trimmomatic
+            ? ch_trimmomatic_log.map { _meta, log -> log }
+            : ch_existing_trimmomatic_log
+
+        def ch_mqc_trimmed_fastqc = params.run_trimmed_fastqc
+            ? ch_trimmed_fastqc_zip.map { _meta, zips -> zips }.flatten()
+            : ch_existing_trimmed_fastqc_zip
+
+        def ch_mqc_bowtie2 = params.run_bowtie2_align
+            ? ch_bowtie2_log.map { _meta, log -> log }
+            : ch_existing_bowtie2_log
+
+        def ch_mqc_picard = params.run_picard_dedup
+            ? ch_dedup_metrics.map { _meta, txt -> txt }
+            : ch_existing_dedup_metrics
+
+        def ch_mqc_samtools = params.run_bam_stats
+            ? ch_bam_flagstat
+                .mix(ch_bam_idxstats, ch_bam_stats)
+                .map { _meta, stat_file -> stat_file }
+            : ch_existing_bam_stats
+
+        def ch_multiqc_all_in = ch_mqc_raw_fastqc
+            .mix(
+                ch_mqc_trimmomatic,
+                ch_mqc_trimmed_fastqc,
+                ch_mqc_bowtie2,
+                ch_mqc_picard,
+                ch_mqc_samtools
+            )
+            .flatten()
+            .collect()
+            .map { files -> [ [ id: 'multiqc_all_report' ], files ] }
+
+        def ch_multiqc_config = params.multiqc_config
+            ? file(params.multiqc_config, checkIfExists: true)
+            : []
+
+        MULTIQC_ALL(ch_multiqc_all_in, ch_multiqc_config)
+        ch_multiqc_all = MULTIQC_ALL.out.report
     }
 
     //
@@ -193,20 +274,61 @@ workflow CUTANDRUN_BASE {
             newLine: true
         )
 
+    //
+    // Step 10: Stage Published Results to Dropbox via rclone
+    //
+    def ch_dropbox_sync_log = channel.empty()
+
+    if (params.run_stage_results_dropbox) {
+        def ch_stage_barrier = channel.empty()
+            .mix(
+                ch_raw_multiqc,
+                ch_trimmed_multiqc,
+                ch_trimmomatic_log,
+                ch_bowtie2_log,
+                ch_dedup_metrics,
+                ch_bam_bai,
+                ch_rpkm_bw,
+                ch_bam_flagstat,
+                ch_bam_idxstats,
+                ch_bam_stats,
+                ch_tagdir,
+                ch_ucsc_bw,
+                ch_multiqc_all,
+                ch_collated_versions
+            )
+            .collect()
+            .ifEmpty(['ready'])
+
+        RCLONE_STAGE_DROPBOX(
+            ch_stage_barrier,
+            params.outdir,
+            params.rclone_remote
+        )
+        ch_dropbox_sync_log = RCLONE_STAGE_DROPBOX.out.log
+    }
+
     emit:
     raw_fastqc_html     = ch_raw_fastqc_html
     raw_multiqc         = ch_raw_multiqc
     trimmed_reads       = ch_trimmed_reads
+    trimmomatic_log     = ch_trimmomatic_log
     trimmed_fastqc_html = ch_trimmed_fastqc_html
     trimmed_multiqc     = ch_trimmed_multiqc
     align_sam           = ch_align_sam
+    bowtie2_log         = ch_bowtie2_log
     dedup_bam           = ch_dedup_bam
     dedup_metrics       = ch_dedup_metrics
     mapq_sam            = ch_mapq_sam
     bam_bai             = ch_bam_bai
     rpkm_bw             = ch_rpkm_bw
+    bam_flagstat        = ch_bam_flagstat
+    bam_idxstats        = ch_bam_idxstats
+    bam_stats           = ch_bam_stats
     tagdir              = ch_tagdir
     bedgraph            = ch_bedgraph
     ucsc_bw             = ch_ucsc_bw
+    multiqc_all         = ch_multiqc_all
+    dropbox_sync_log    = ch_dropbox_sync_log
     versions            = ch_collated_versions
 }

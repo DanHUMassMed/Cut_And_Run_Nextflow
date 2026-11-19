@@ -9,6 +9,7 @@ process MULTIQC {
 
     input:
     tuple val(meta), path(multiqc_files, stageAs: "?/*")
+    path multiqc_config
 
     output:
     tuple val(meta), path("*.html") , emit: report
@@ -20,12 +21,14 @@ process MULTIQC {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def args       = task.ext.args ?: ''
+    def prefix     = task.ext.prefix ?: "${meta.id}"
+    def config_arg = multiqc_config ? "--config ${multiqc_config}" : ''
     """
     multiqc \\
         --force \\
         --filename ${prefix}.html \\
+        ${config_arg} \\
         ${args} \\
         .
     """

@@ -95,3 +95,13 @@ def resolveInputFiles(pattern, samplesheet_map, suffixes) {
             [ buildMeta(sample_id, samplesheet_map), file ]
         }
 }
+
+def resolveBamBai(pattern, samplesheet_map) {
+    channel
+        .fromPath(pattern)
+        .map { bam ->
+            def sample_id = extractSampleId(bam, ['.bam'])
+            def bai = file("${bam}.bai", checkIfExists: true)
+            [ buildMeta(sample_id, samplesheet_map), bam, bai ]
+        }
+}

@@ -12,14 +12,15 @@ process TRIMMOMATIC {
     path adapters
 
     output:
-    tuple val(meta), path("*_paired.fq.gz")   , emit: paired_reads
+    tuple val(meta), path("*_paired.fq.gz")           , emit: paired_reads
+    tuple val(meta), path("${prefix}_trimmomatic.log"), emit: log
     tuple val("${task.process}"), val('trimmomatic'), eval("trimmomatic -version 2>/dev/null || echo '0.39'"), emit: versions_trimmomatic, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    prefix = task.ext.prefix ?: "${meta.id}"
     def illuminaclip = task.ext.args2 ?: "${params.trimmomatic_illuminaclip ?: '2:25:7:1:true'}"
     def args = task.ext.args ?: "${params.trimmomatic_args ?: 'SLIDINGWINDOW:4:10 TRAILING:3 MINLEN:10'}"
     """
@@ -59,7 +60,7 @@ process TRIMMOMATIC {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    prefix = task.ext.prefix ?: "${meta.id}"
     """
     R1="${reads[0]}"
     R2="${reads[1]}"
