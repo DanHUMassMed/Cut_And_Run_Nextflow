@@ -42,6 +42,7 @@ sync_dir() {
 
     sync_dir "01_trim"       "*_trimmomatic.log"
     sync_dir "02_fastqc"     "**/*"
+    sync_dir "02_multiqc"    "*.html"
     sync_dir "02_multiqc"    "**/*"
     sync_dir "03_align"      "*_bowtie2.log"
     sync_dir "04_dedup"      "*_dup.txt"
