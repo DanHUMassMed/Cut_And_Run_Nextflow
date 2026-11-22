@@ -17,8 +17,6 @@ process HOMER_UCSC_BW {
     tuple val("${task.process}"), val('homer'), val('4.11'), emit: versions_homer, topic: versions
     tuple val("${task.process}"), val('ucsc'), val('482')  , emit: versions_ucsc, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

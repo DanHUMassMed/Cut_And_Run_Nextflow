@@ -16,8 +16,6 @@ process BOWTIE2_ALIGN {
     tuple val(meta), path("${prefix}_bowtie2.log"), emit: log
     tuple val("${task.process}"), val('bowtie2'), eval("(bowtie2 --version 2>&1 || true) | sed -n 's/.*bowtie2-align-s version //p'"), emit: versions_bowtie2, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: "${params.bowtie2_args ?: '--very-sensitive -N 0 -X 500'}"

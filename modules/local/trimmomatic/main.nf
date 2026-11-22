@@ -16,8 +16,6 @@ process TRIMMOMATIC {
     tuple val(meta), path("${prefix}_trimmomatic.log"), emit: log
     tuple val("${task.process}"), val('trimmomatic'), eval("trimmomatic -version 2>/dev/null || echo '0.39'"), emit: versions_trimmomatic, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     prefix = task.ext.prefix ?: "${meta.id}"

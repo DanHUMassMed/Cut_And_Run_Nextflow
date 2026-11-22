@@ -15,8 +15,6 @@ process PICARD_DEDUP {
     tuple val(meta), path("${prefix}_dup.txt")        , emit: metrics
     tuple val("${task.process}"), val('picard'), eval("(picard MarkDuplicates --version 2>&1 || true) | sed -n 's/.*Version://p' | head -n 1"), emit: versions_picard, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     prefix = task.ext.prefix ?: "${meta.id}"

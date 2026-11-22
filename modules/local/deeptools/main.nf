@@ -22,9 +22,6 @@ process DEEPTOOLS_BAM_BW {
     tuple val("${task.process}"), val('samtools'), eval("(samtools --version 2>&1 || true) | sed '1!d;s/^.*samtools //'"), emit: versions_samtools, topic: versions
     tuple val("${task.process}"), val('deeptools'), eval('(bamCoverage --version 2>&1 || true) | sed "s/bamCoverage //g"'), emit: versions_deeptools, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: "--normalizeUsing ${params.bamcoverage_norm} --binSize ${params.bamcoverage_bin_size}"
     prefix = task.ext.prefix ?: "${meta.id}"

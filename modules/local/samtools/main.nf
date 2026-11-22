@@ -14,9 +14,6 @@ process SAMTOOLS_MAPQ_FILTER {
     tuple val(meta), path("${prefix}_mapqfilter.sam"), emit: sam
     tuple val("${task.process}"), val('samtools'), eval("(samtools --version 2>&1 || true) | sed '1!d;s/^.*samtools //'"), emit: versions_samtools, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: "-q ${params.mapq_threshold ?: 10}"
     prefix = task.ext.prefix ?: "${meta.id}"

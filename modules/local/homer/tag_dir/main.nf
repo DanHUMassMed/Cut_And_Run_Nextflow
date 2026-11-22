@@ -14,9 +14,6 @@ process HOMER_TAG_DIR {
     tuple val(meta), path("tag_dir/${prefix}")             , emit: tagdir
     tuple val("${task.process}"), val('homer'), val('4.11'), emit: versions_homer, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"

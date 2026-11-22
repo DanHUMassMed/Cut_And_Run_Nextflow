@@ -11,8 +11,6 @@ process RCLONE_STAGE_DROPBOX {
     output:
     path "rclone_dropbox_sync.log", emit: log
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: '--transfers 4 --checkers 8 -v'

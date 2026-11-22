@@ -17,8 +17,6 @@ process MULTIQC {
     tuple val(meta), path("*_plots"), emit: plots, optional: true
     tuple val("${task.process}"), val('multiqc'), eval('(multiqc --version || true) | sed "s/.* //g"'), emit: versions_multiqc, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args       = task.ext.args ?: ''

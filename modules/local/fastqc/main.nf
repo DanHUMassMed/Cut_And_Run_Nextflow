@@ -23,9 +23,6 @@ process FASTQC {
     tuple val(meta), path("*_fastqc.zip") , emit: zip
     tuple val("${task.process}"), val('fastqc'), eval('(fastqc --version || true) | sed "/FastQC v/!d; s/.*v//"'), emit: versions_fastqc, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     """
